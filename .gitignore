@@ -17,6 +17,7 @@ build/
 #( DON'T IGNORE THESE:
 
 !.gitignore
+!requirements.txt
 !in-dirs.txt
 !LICENSE.txt
 !asin_data.csv
