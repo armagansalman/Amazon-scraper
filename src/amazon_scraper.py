@@ -48,6 +48,7 @@ import utility as util
 
 
 def get_webpage(target_url, user_agents):
+	# Use different user agents to avoid bot detection:
 	headers = {"User-Agent":user_agents[random.randint(0,len(user_agents)-1)] \
 				,"accept-language": "en-US,en;q=0.9" \
 				,"accept-encoding": "gzip, deflate, br" \
