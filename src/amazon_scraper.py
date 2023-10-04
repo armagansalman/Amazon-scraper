@@ -27,6 +27,7 @@ SOFTWARE.
 # https://www.scrapingdog.com/blog/scrape-amazon/#Changing_Headers_on_every_request
 
 #(
+import sys
 import time
 from typing import Iterable
 #)
@@ -40,11 +41,13 @@ import random
 
 #( local imports
 import user_agents as ua
+import csv_io as cio
+import utility as util
 #)
 
 
 def get_webpage(target_url, user_agents):
-	headers = {"User-Agent":user_agents[random.randint(0,len(user_agents))] \
+	headers = {"User-Agent":user_agents[random.randint(0,len(user_agents)-1)] \
 				,"accept-language": "en-US,en;q=0.9" \
 				,"accept-encoding": "gzip, deflate, br" \
 				,"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"}
@@ -66,19 +69,14 @@ def get_amazon_product_page(asin: str):
 	return get_webpage(target_url, user_agents)
 #
 
-def get_multiple_amazon_product_pages(multi_asin: Iterable[str]):
-	for asin in multi_asin:
-		yield get_amazon_product_page(asin)
-#
-
 def get_product_info(asin: str, sleep_duration: float):
 	product_info = {}
 	specs_arr=[]
 	specs_obj={}
 
 	status_code, webpage_response = get_amazon_product_page(asin)
-
-	print(f"Response status code: {status_code}")
+	#print(webpage_response.text)
+	print(f"Response status code: {status_code} ; ASIN: {asin}")
 
 	if(status_code != 200):
 		print(webpage_response)
@@ -88,68 +86,138 @@ def get_product_info(asin: str, sleep_duration: float):
 
 	time.sleep(sleep_duration)
 
+	product_info["date-time"] = util.get_now_str()
 	try:
 		product_info["title"]=soup.find('h1',{'id':'title'}).text.lstrip().rstrip()
+	#
 	except:
 		product_info["title"]=None
-
-	"""
-	images = re.findall('"hiRes":"(.+?)"', resp.text)
+	#
+	images = re.findall('"hiRes":"(.+?)"', webpage_response.text)
 	product_info["images"]=images
-	"""
 
 	try:
 		product_info["price"]=soup.find("span",{"class":"a-price"}).find("span").text
+	#
 	except:
 		product_info["price"]=None
-
-	if product_info["price"] is None:
+	#
+	
+	# TODO(Armağan): Find price from price list.
+	if product_info["price"] is None: # If price is not available.
 		try:
-			product_info["price"]=soup.find("span",{"class":"a-color-base"}).find("span").text
+			#price_text = soup.find("li",{"class":"swatchElement selected"}).find("span", {"class": "a-color-base"}).text
+			price_text = soup.find("li",{"class":"swatchElement selected"}).find("span", {"class": "a-button-inner"}).text
+			price_text = price_text.strip()
+			idx = price_text.find("from")
+			
+			product_info["price"] = price_text[idx+4:].strip()
 		except:
 			product_info["price"]=None
-
-
+	
+	
 	try:
 		product_info["rating"]=soup.find("i",{"class":"a-icon-star"}).text
+	#
 	except:
 		product_info["rating"]=None
-
+	#
 	try:
 		product_info["rating_count"]=soup.find("span",{'id':'acrCustomerReviewText'}).text
+	#
 	except:
 		product_info["rating_count"]=None
-
-
-
-	"""
+	#
 	specs = soup.find_all("tr",{"class":"a-spacing-small"})
 
 	for u in range(0,len(specs)):
 		spanTags = specs[u].find_all("span")
 		specs_obj[spanTags[0].text]=spanTags[1].text
-	"""
-
-	"""
+	#
+	
 	specs_arr.append(specs_obj)
 	product_info["specs"]=specs_arr
-	"""
 	
 	return product_info
 #
 
-l = []
-asin = "B0BSHF7WHW"
-asin = "B0C7686169"
-asin = "014026468X"
-#asin = "1982171456"
+def write_csv_ver_1(file_path, product_infos, **kwargs):
+		CSV_VERSION = 1
+		
+		CSV_DELIMITER = kwargs.get("delimiter", ',')
+		CSV_QUOTECHAR = kwargs.get("quotechar", '"')
+		
+		CSV_INFO_ROW_TYPE = "T:0"
+		CSV_PRODUCT_INFO_ROW_TYPE = "T:1"
+		
+		rows = [
+				[CSV_INFO_ROW_TYPE, "==", "Info row"] \
+				, [CSV_PRODUCT_INFO_ROW_TYPE, "==", "Date", "Rating count", "Rating", "Price", "Title", "Specs", "Images"] \
+				, [CSV_INFO_ROW_TYPE, f"Delimiter: {CSV_DELIMITER}"] \
+				, [CSV_INFO_ROW_TYPE, f"QUOTECHAR: {CSV_QUOTECHAR}"] \
+		]
+			
+		for p in product_infos:
+			
+			row = [CSV_PRODUCT_INFO_ROW_TYPE, p["date-time"], p["rating_count"] \
+					, p["rating"], p["price"], p["title"], p["specs"], p["images"]
+			]
+			
+			rows.append(row)	
+		#
+		cio.csv_write_file(file_path, rows, delimiter = CSV_DELIMITER)
+#
 
-SLEEP_DURATION_SECONDS = 1
+def get_product_datas(asin_values: Iterable):
+	SLEEP_DURATION_SECONDS = 0.250 # Sleep to avoid IP ban.
+	
+	product_infos = []
 
-product_info = get_product_info(asin, SLEEP_DURATION_SECONDS)
+	for asin in asin_values:
+		product_info = get_product_info(asin, SLEEP_DURATION_SECONDS)
 
-l.append(product_info)
+		product_infos.append(product_info)
+	#
+	return product_infos
+#
 
-for x in l:
-	for k, v in x.items():
-		print("~ ", k, " ", v)
+def get_asins_from_csv(file_path, **kwargs):
+	CSV_DELIMITER = kwargs.get("delimiter", ',')
+	
+	rows = cio.csv_read_file(file_path, delimiter = CSV_DELIMITER)
+	# rows example: [['1982171456'], ['014026468X'], ['B0C7686169'], ['B0BSHF7WHW']]
+	
+	# Each row should have 1 element (asin).
+	for row in rows:
+		if len(row) < 1:
+			continue
+		#
+		first_element = row[0]
+		
+		yield first_element
+	#
+#
+
+def main(args):
+	NOW_STR = util.get_now_str()
+	
+	fpath = f"amazon_products_({NOW_STR}).csv"
+	
+	print("[ INFO ] Getting product pages...")
+	product_infos = get_product_datas(args["asin_values"])
+	
+	write_csv_ver_1(fpath, product_infos, delimiter = ';')
+	
+	print(f"Product data was written to ({fpath})")
+#
+
+if __name__ == "__main__":
+	if len(sys.argv) < 2:
+		raise Exception("Wrong argument count. Provide a .csv that holds an asin code on each line.")
+	#
+	asins = list(get_asins_from_csv(sys.argv[1], delimiter = ';'))
+	
+	args = {"asin_values": asins}
+	
+	main(args)
+#
