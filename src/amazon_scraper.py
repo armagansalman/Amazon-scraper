@@ -208,7 +208,7 @@ def main(args):
 	
 	write_csv_ver_1(fpath, product_infos, delimiter = ';')
 	
-	print(f"Product data was written to ({fpath})")
+	print(f"Results are in: ({fpath})")
 #
 
 if __name__ == "__main__":
