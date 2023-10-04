@@ -76,7 +76,7 @@ def get_product_info(asin: str, sleep_duration: float):
 	specs_arr=[]
 	specs_obj={}
 
-	time.sleep(sleep_duration)
+	time.sleep(sleep_duration) # Sleep to avoid IP ban.
 	status_code, webpage_response = get_amazon_product_page(asin)
 
 	print(f"Response status code: {status_code} ; ASIN: {asin}")
