@@ -71,7 +71,7 @@ def get_multiple_amazon_product_pages(multi_asin: Iterable[str]):
 		yield get_amazon_product_page(asin)
 #
 
-def get_product_info(asin: str):
+def get_product_info(asin: str, sleep_duration: float):
 	product_info = {}
 	specs_arr=[]
 	specs_obj={}
@@ -84,12 +84,9 @@ def get_product_info(asin: str):
 		print(webpage_response)
 	#
 
-
 	soup=BeautifulSoup(webpage_response.text,'html.parser')
 
-	SLEEP_DURATION_SECONDS = 1
-
-	time.sleep(SLEEP_DURATION_SECONDS)
+	time.sleep(sleep_duration)
 
 	try:
 		product_info["title"]=soup.find('h1',{'id':'title'}).text.lstrip().rstrip()
@@ -141,12 +138,15 @@ def get_product_info(asin: str):
 	return product_info
 #
 
-
-
+l = []
 asin = "B0BSHF7WHW"
-asin = "1982171456"
+asin = "B0C7686169"
+asin = "014026468X"
+#asin = "1982171456"
 
+SLEEP_DURATION_SECONDS = 1
 
+product_info = get_product_info(asin, SLEEP_DURATION_SECONDS)
 
 l.append(product_info)
 
