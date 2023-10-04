@@ -54,7 +54,7 @@ def get_webpage(target_url, user_agents):
 				,"accept-encoding": "gzip, deflate, br" \
 				,"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"}
 	#
-	resp = requests.get(target_url,headers=headers)
+	resp = requests.get(target_url, headers=headers)
 	
 	return (resp.status_code, resp)
 #
@@ -86,7 +86,8 @@ def get_product_info(asin: str, sleep_duration: float):
 	#
 
 	soup=BeautifulSoup(webpage_response.text,'html.parser')
-
+	
+	product_info["asin"] = asin
 	product_info["date-time"] = util.get_now_str()
 	try:
 		product_info["title"]=soup.find('h1',{'id':'title'}).text.lstrip().rstrip()
@@ -153,14 +154,14 @@ def write_csv_ver_1(file_path, product_infos, **kwargs):
 		
 		rows = [
 				[CSV_INFO_ROW_TYPE, "==", "Info row"] \
-				, [CSV_PRODUCT_INFO_ROW_TYPE, "==", "Date", "Rating count", "Rating", "Price", "Title", "Specs", "Images"] \
+				, [CSV_PRODUCT_INFO_ROW_TYPE, "==", "Date", "ASIN", "Rating count", "Rating", "Price", "Title", "Specs", "Images"] \
 				, [CSV_INFO_ROW_TYPE, f"Delimiter: {CSV_DELIMITER}"] \
 				, [CSV_INFO_ROW_TYPE, f"QUOTECHAR: {CSV_QUOTECHAR}"] \
 		]
 			
 		for p in product_infos:
 			
-			row = [CSV_PRODUCT_INFO_ROW_TYPE, p["date-time"], p["rating_count"] \
+			row = [CSV_PRODUCT_INFO_ROW_TYPE, p["date-time"], p["asin"], p["rating_count"] \
 					, p["rating"], p["price"], p["title"], p["specs"], p["images"]
 			]
 			
