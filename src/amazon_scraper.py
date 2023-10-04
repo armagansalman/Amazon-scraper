@@ -23,8 +23,9 @@ SOFTWARE.
 """
 
 
-# Code inspired from:
+# Reference code:
 # https://www.scrapingdog.com/blog/scrape-amazon/#Changing_Headers_on_every_request
+
 
 #(
 import sys
@@ -74,8 +75,9 @@ def get_product_info(asin: str, sleep_duration: float):
 	specs_arr=[]
 	specs_obj={}
 
+	time.sleep(sleep_duration)
 	status_code, webpage_response = get_amazon_product_page(asin)
-	#print(webpage_response.text)
+
 	print(f"Response status code: {status_code} ; ASIN: {asin}")
 
 	if(status_code != 200):
@@ -83,8 +85,6 @@ def get_product_info(asin: str, sleep_duration: float):
 	#
 
 	soup=BeautifulSoup(webpage_response.text,'html.parser')
-
-	time.sleep(sleep_duration)
 
 	product_info["date-time"] = util.get_now_str()
 	try:
