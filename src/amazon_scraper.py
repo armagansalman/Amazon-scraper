@@ -23,6 +23,8 @@ SOFTWARE.
 """
 
 
+""" Amazon doesn't allow automated scripts. Because of that, this project is archived. """
+
 # Reference code:
 # https://www.scrapingdog.com/blog/scrape-amazon/#Changing_Headers_on_every_request
 
@@ -49,14 +51,16 @@ import utility as util
 
 def get_webpage(target_url, user_agents):
 	# Use different user agents to avoid bot detection:
-	headers = {"User-Agent":user_agents[random.randint(0,len(user_agents)-1)] \
+	rand_user_agent_idx = random.randint(0,len(user_agents)-1)
+	
+	headers = {"User-Agent":user_agents[rand_user_agent_idx] \
 				,"accept-language": "en-US,en;q=0.9" \
 				,"accept-encoding": "gzip, deflate, br" \
 				,"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"}
 	#
 	resp = requests.get(target_url, headers=headers)
 	
-	return (resp.status_code, resp)
+	return (rand_user_agent_idx, resp.status_code, resp)
 #
 
 def get_amazon_product_page(asin: str):
@@ -77,9 +81,9 @@ def get_product_info(asin: str, sleep_duration: float):
 	specs_obj={}
 
 	time.sleep(sleep_duration) # Sleep to avoid IP ban.
-	status_code, webpage_response = get_amazon_product_page(asin)
+	user_agent_idx, status_code, webpage_response = get_amazon_product_page(asin)
 
-	print(f"Response status code: {status_code} ; ASIN: {asin}")
+	print(f"Response status code: {status_code} ; ASIN: {asin} ; user_agent_idx: {user_agent_idx}")
 
 	if(status_code != 200):
 		print(webpage_response)
@@ -171,7 +175,7 @@ def write_csv_ver_1(file_path, product_infos, **kwargs):
 #
 
 def get_product_datas(asin_values: Iterable):
-	SLEEP_DURATION_SECONDS = 1 # Sleep to avoid IP ban.
+	SLEEP_DURATION_SECONDS = 2 # Sleep to avoid IP ban.
 	
 	product_infos = []
 
