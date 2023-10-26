@@ -27,20 +27,20 @@ SOFTWARE.
 # https://www.scrapingdog.com/blog/scrape-amazon/#Changing_Headers_on_every_request
 
 
-#(
+#( System modules
 import sys
 import time
 from typing import Iterable
-#)
-
-#(
-import requests
-from bs4 import BeautifulSoup
 import re
 import random
 #)
 
-#( local imports
+#( 3rd party modules
+import requests
+from bs4 import BeautifulSoup
+#)
+
+#( Local modules
 import user_agents as ua
 import csv_io as cio
 import utility as util
@@ -171,7 +171,7 @@ def write_csv_ver_1(file_path, product_infos, **kwargs):
 #
 
 def get_product_datas(asin_values: Iterable):
-	SLEEP_DURATION_SECONDS = 0.250 # Sleep to avoid IP ban.
+	SLEEP_DURATION_SECONDS = 1 # Sleep to avoid IP ban.
 	
 	product_infos = []
 
